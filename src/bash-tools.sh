@@ -37,9 +37,14 @@ function get_timestamp() {
 	date "+%m-%d-%Y, %r"
 }
 
+# echo to stderr
+function stderr() {
+	echo "$@" >&2
+}
+
 # common logging suffix for INFO messages
 function print_ok() {
-	echo "${color_green}OK${color_reset}" >&2
+	stderr "${color_green}OK${color_reset}"
 }
 
 # INFO log-level message to stderr
@@ -49,7 +54,7 @@ function printinfo() {
 		echo_opts='-en'
 		shift
 	fi
-	echo $echo_opts "${color_green}INFO ${color_reset}$*" >&2
+	stderr $echo_opts "${color_green}INFO ${color_reset}$*"
 }
 
 # WARN log-level message to stderr
@@ -59,7 +64,7 @@ function printwarn() {
 		echo_opts='-en'
 		shift
 	fi
-	echo $echo_opts "${color_yellow}WARN ${color_reset}$*" >&2
+	stderr $echo_opts "${color_yellow}WARN ${color_reset}$*"
 }
 
 # ERROR log-level message, with optional error code, to stderr
@@ -71,12 +76,12 @@ function printerr() {
 	if [[ $# -eq 2 ]]; then
 		code=$1
 		msg="$2"
-		echo -e "${color_red}ERROR ${code}${color_reset} $msg" >&2
+		stderr -e "${color_red}ERROR ${code}${color_reset} $msg"
 	elif [[ $# -eq 1 ]]; then
 		msg="$1"
-		echo -e "${color_red}ERROR${color_reset} $msg" >&2
+		stderr -e "${color_red}ERROR${color_reset} $msg"
 	else
-		echo "${color_red}ERROR${color_reset} usage: printerr [code] msg" >&2
+		stderr "${color_red}ERROR${color_reset} usage: printerr [code] msg"
 		exit 2
 	fi
 }
@@ -103,7 +108,7 @@ function on_err() {
 # `read` but allows a default value
 function read_default() {
 	if [[ $# -ne 3 ]]; then
-		echo "usage: read_default description default_val outvar" >&2
+		stderr "usage: read_default description default_val outvar"
 		return 1
 	fi
 	local description="$1" default_val="$2" outvar="$3" val
@@ -121,7 +126,7 @@ function read_default() {
 # `read` but stylized like `read_default`
 function read_no_default() {
 	if [[ $# -ne 2 ]]; then
-		echo "usage: read_no_default description outvar" >&2
+		stderr "usage: read_no_default description outvar"
 		return 1
 	fi
 	local description="$1" outvar="$2" val
@@ -155,14 +160,14 @@ function get_latest_github_release() {
 		return 2
 	fi
 	local ghproject="$1" outvar="$2" version
-	echo -en "Looking up latest '$ghproject' version..." >&2
+	printinfo -n "Looking up latest '$ghproject' version..."
 	version="$(_get_latest_github_release "$ghproject")"
 	if [[ ! "$version" =~ v[[:digit:]]+\.[[:digit:]]+(\.[[:digit:]]+)? ]]; then
-		echo "${color_red}failed${color_reset}." >&2
+		stderr "${color_red}failed${color_reset}."
 		printerr "malformed version string: \"$version\""
 		return 1
 	fi
-	echo -e "${theme_value}${version}${color_reset}" >&2
+	stderr "${theme_value}${version}${color_reset}"
 	printf -v "$outvar" "%s" "$version"
 }
 
