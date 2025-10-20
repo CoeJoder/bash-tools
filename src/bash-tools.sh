@@ -355,14 +355,14 @@ function choose_from_menu() {
 			else
 				echo "  $o"
 			fi
-			index=$((index+1))
+			index=$((index + 1))
 		done
 		IFS= read -rs -n3 key             # wait for user to key in arrows or ENTER
 		if [[ $key == "${esc}[A" ]]; then # up arrow
-			cur=$((cur-1))
+			cur=$((cur - 1))
 			((cur < 0)) && cur=$((count - 1))
 		elif [[ $key == "${esc}[B" ]]; then # down arrow
-			cur=$((cur+1))
+			cur=$((cur + 1))
 			((cur >= count)) && cur=0
 		elif [[ $key == "" ]]; then # nothing, i.e the read delimiter - ENTER
 			break
@@ -421,7 +421,7 @@ function assert_offline() {
 # assert that the caller's script was sourced, rather than executed directly
 function assert_sourced() {
 	if [[ "${BASH_SOURCE[1]}" == "${BASH_SOURCE[-1]}" ]]; then
-    printerr "script must be sourced, not run directly"
+		printerr "script must be sourced, not run directly"
 		exit 1
 	fi
 }
