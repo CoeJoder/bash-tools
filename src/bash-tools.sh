@@ -290,17 +290,23 @@ function string_contains() {
 }
 
 # test expression for network connectivity
-# source: https://stackoverflow.com/a/14939373/159570
-# (modified to avoid `ls | grep`)
-function is_online() ( # subshell
-	shopt -s extglob
-	for interface in /sys/class/net/!(*lo*); do
-		if [[ $(cat "/sys/class/net/$(basename "$interface")/carrier" 2>/dev/null) == 1 ]]; then
-			return 0
+has_network_connection() {
+	# iterate through all network interfaces except loopback
+	for iface in /sys/class/net/*; do
+		iface_name=$(basename "$iface")
+		[ "$iface_name" = "lo" ] && continue
+
+		# check if interface is up and has carrier (link detected)
+		if [[ -f "$iface/carrier" && -f "$iface/operstate" ]]; then
+			carrier=$(<"$iface/carrier")
+			operstate=$(<"$iface/operstate")
+			if [[ "$carrier" = "1" && "$operstate" = "up" ]]; then
+				return 0
+			fi
 		fi
 	done
 	return 1
-)
+}
 
 # yes-or-no prompt
 # 'no' is always falsey (returns 1)
@@ -415,9 +421,9 @@ function assert_not_on_host() {
 	fi
 }
 
-# assert that script process does not have access to the internet
+# assert that script process does not have network access
 function assert_offline() {
-	if is_online; then
+	if has_network_connection; then
 		printerr "script must be run on the air-gapped PC"
 		exit 1
 	fi
