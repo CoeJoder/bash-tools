@@ -291,16 +291,14 @@ function string_contains() {
 
 # test expression for network connectivity
 has_network_connection() {
+	local iface
 	# iterate through all network interfaces except loopback
 	for iface in /sys/class/net/*; do
-		iface_name=$(basename "$iface")
-		[ "$iface_name" = "lo" ] && continue
+		[ "$(basename "$iface")" = "lo" ] && continue
 
 		# check if interface is up and has carrier (link detected)
 		if [[ -f "$iface/carrier" && -f "$iface/operstate" ]]; then
-			carrier=$(<"$iface/carrier")
-			operstate=$(<"$iface/operstate")
-			if [[ "$carrier" = "1" && "$operstate" = "up" ]]; then
+			if [[ "$(<"$iface/carrier")" = "1" && "$(<"$iface/operstate")" = "up" ]]; then
 				return 0
 			fi
 		fi
