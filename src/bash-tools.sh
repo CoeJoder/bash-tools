@@ -6,7 +6,7 @@
 
 # -------------------------- HEADER -------------------------------------------
 
-# this file is sourced, so `export` is not required
+# this file is sourced; ignore unused variable warnings
 # shellcheck disable=SC2034
 
 # -------------------------- CONSTANTS ----------------------------------------
@@ -23,6 +23,9 @@ if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
 	color_lightgray=$(tput setaf 245)
 	color_reset=$(tput sgr0)
 	bold=$(tput bold)
+
+	# default theme
+	# TODO implement `set_theme()`
 	theme_filename="${color_green}"
 	theme_value="${color_cyan}"
 	theme_url="${color_blue}"
@@ -133,6 +136,24 @@ function read_no_default() {
 	IFS= read -rp "${description}: ${theme_value}" val
 	echo -en "${color_reset}"
 	printf -v "$outvar" "%s" "$val"
+}
+
+# if directory doesn't exist, ask if it should be created, and chmod it
+function ask_to_create_directory_if_not_exist() {
+	if [[ $# -lt 1 ]]; then
+		stderr "usage: ask_to_create_directory_if_not_exists <directory> [permissions=700]"
+	fi
+	local -r _dir="$1"
+	shift
+	local -r _perms="${1:-700}"
+
+	# ensure config directory exists and is read/writable
+	if [[ ! -d "$_dir" ]]; then
+		printwarn "directory not found: ${theme_filename}$_dir${color_reset}"
+		yes_or_no --default-yes "Create it?" || return
+		mkdir -p "$_dir"
+	fi
+	chmod "$_perms" "$_dir"
 }
 
 # shellcheck disable=SC2120  # optional args
@@ -289,8 +310,12 @@ function string_contains() {
 	[[ "$1" == *"$2"* ]] &>/dev/null
 }
 
-# test expression for network connectivity
-has_network_connection() {
+# test expression for lack of network connectivity
+#
+# It is important to predicate upon the negative condition, so that errors are
+# not mistaken for a confirmed lack of connection (e.g., for the use case of
+# testing whether a system is air-gapped).
+function has_no_network_connection() {
 	local iface
 	# iterate through all network interfaces except loopback
 	for iface in /sys/class/net/*; do
@@ -299,11 +324,33 @@ has_network_connection() {
 		# check if interface is up and has carrier (link detected)
 		if [[ -f "$iface/carrier" && -f "$iface/operstate" ]]; then
 			if [[ "$(<"$iface/carrier")" == "1" && "$(<"$iface/operstate")" == "up" ]]; then
-				return 0
+				return 1
 			fi
 		fi
 	done
-	return 1
+	return 0
+}
+
+# factor
+function _is_sourced() {
+	if (( $# == 0 )); then
+		printerr "usage: _is_sourced \"\${BASH_SOURCE[@]}\""
+		exit 2
+	fi
+	local -r shell_bin="$(readlink -f /proc/$$/exe)"
+	local -r call_stack=("$@")
+
+	# the first predicate is true when caller is sourced from shell script
+	# the second predicate is true when caller is sourced from interactive shell
+	[[ "${call_stack[0]}" != "${call_stack[-1]}" || "$0" == "$shell_bin" ]]
+}
+
+# test expression for whether caller's script was invoked with `source`
+# example:
+#   is_sourced "${BASH_SOURCE[@]}" && echo "This script was sourced."
+function is_sourced() {
+	# drop the current call stack frame from the analysis
+	_is_sourced "${BASH_SOURCE[@]:1}"
 }
 
 # yes-or-no prompt
@@ -342,8 +389,14 @@ function continue_or_exit() {
 
 # pause script execution until user presses a key
 function press_any_key_to_continue() {
-	IFS= read -rsn 1 -p $'Press any key to continue...'
+	local -r prompt="${1:-Press any key to continue...}"
+	IFS= read -rsn 1 -p $"$prompt"
 	printf "\n\n"
+}
+
+# pause script execution until user presses a key, then exit shell
+function press_any_key_to_exit_shell() {
+	press_any_key_to_continue 'Press any key to exit shell...'
 }
 
 # in-place shell selection list
@@ -421,7 +474,7 @@ function assert_not_on_host() {
 
 # assert that script process does not have network access
 function assert_offline() {
-	if has_network_connection; then
+	if ! has_no_network_connection; then
 		printerr "script must be run on the air-gapped PC"
 		exit 1
 	fi
@@ -429,8 +482,22 @@ function assert_offline() {
 
 # assert that the caller's script was sourced, rather than executed directly
 function assert_sourced() {
-	if [[ "${BASH_SOURCE[1]}" == "${BASH_SOURCE[-1]}" ]]; then
-		printerr "script must be sourced, not run directly"
+	# drop the current call stack frame from the analysis
+	if ! _is_sourced "${BASH_SOURCE[@]:1}"; then
+		printerr "script must be sourced, not executed directly"
+		exit 1
+	fi
+}
+
+# assert that the caller's script was executed directly, rather than sourced
+function assert_not_sourced() {
+	# drop the current call stack frame from the analysis
+	if _is_sourced "${BASH_SOURCE[@]:1}"; then
+		printerr "script must be executed directly, not sourced"
+		# pause before closing interactive shell
+		if [[ "$-" == *i* ]]; then
+			press_any_key_to_exit_shell
+		fi
 		exit 1
 	fi
 }
