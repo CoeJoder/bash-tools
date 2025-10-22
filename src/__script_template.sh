@@ -15,9 +15,9 @@ function show_usage() {
 	cat >&2 <<-EOF
 		Usage: $(basename "${BASH_SOURCE[0]}") [options]
 		Options:
-		--the-secret-of-life <val>   Why are we here? Just to suffer? (default: 42)
-		--no-banner, -q              For the esteemed, joyless professional
-		--help, -h                   Show this message
+		--the-secret-of-life ${underline}val${nounderline}   Why are we here? Just to suffer? (default: 42)
+		--no-banner, -q            For the esteemed, joyless professional
+		--help, -h                 Show this message
 	EOF
 }
 
