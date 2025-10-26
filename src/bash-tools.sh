@@ -20,6 +20,7 @@ if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
 	color_magenta=$(tput setaf 5)
 	color_cyan=$(tput setaf 6)
 	color_white=$(tput setaf 7)
+	color_darkgray=$(tput setaf 232)
 	color_lightgray=$(tput setaf 245)
 	color_reset=$(tput sgr0)
 	bold=$(tput bold)
@@ -50,6 +51,26 @@ function stderr() {
 # common logging suffix for INFO messages
 function print_ok() {
 	stderr "${color_green}OK${color_reset}"
+}
+
+# TRACE log-level message to stderr
+function printtrace() {
+	local echo_opts='-e'
+	if [[ $1 == '-n' ]]; then
+		echo_opts='-en'
+		shift
+	fi
+	stderr $echo_opts "${color_lightgray}TRACE ${color_reset}$*"
+}
+
+# DEBUG log-level message to stderr
+function printdebug() {
+	local echo_opts='-e'
+	if [[ $1 == '-n' ]]; then
+		echo_opts='-en'
+		shift
+	fi
+	stderr $echo_opts "${color_darkgray}DEBUG ${color_reset}$*"
 }
 
 # INFO log-level message to stderr
@@ -486,7 +507,7 @@ function assert_offline() {
 function assert_sourced() {
 	# drop the current call stack frame from the analysis
 	if ! _is_sourced "${BASH_SOURCE[@]:1}"; then
-		printerr "script must be sourced, not executed directly"
+		printerr "script must be sourced, not executed directly: ${theme_filename}${BASH_SOURCE[1]}${color_reset}"
 		exit 1
 	fi
 }
@@ -495,7 +516,7 @@ function assert_sourced() {
 function assert_not_sourced() {
 	# drop the current call stack frame from the analysis
 	if _is_sourced "${BASH_SOURCE[@]:1}"; then
-		printerr "script must be executed directly, not sourced"
+		printerr "script must be executed directly, not sourced: ${theme_filename}${BASH_SOURCE[1]}${color_reset}"
 		# pause before closing interactive shell
 		if [[ "$-" == *i* ]]; then
 			press_any_key_to_exit_shell
