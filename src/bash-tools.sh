@@ -71,7 +71,6 @@ function set_loglevel() {
 	local log_level="$1"
 	local log_level_val
 	if [[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]; then
-		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$log_level]}"
 		_BASHTOOLS_CURRENT_LOGLEVEL="$log_level"
 	else
 		printerr "Invalid log-level: $log_level"
