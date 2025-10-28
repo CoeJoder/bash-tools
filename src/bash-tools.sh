@@ -53,6 +53,57 @@ function print_ok() {
 	stderr "${color_green}OK${color_reset}"
 }
 
+# log levels
+declare -A _BASHTOOLS_LOGLEVELS=(
+	['trace']="10 $color_lightgray"
+	['debug']="20 $color_darkgray"
+	['info']="30 $color_green"
+	['warn']="40 $color_yellow"
+	['error']="50 $color_red"
+	['fatal']="60 ${color_red}${bold}"
+)
+
+# current log-level
+_BASHTOOLS_CURRENT_LOGLEVEL='warn'
+
+# set the current log-level
+function set_loglevel() {
+	local log_level="$1"
+	local log_level_val
+	if [[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]; then
+		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$log_level]}"
+		_BASHTOOLS_CURRENT_LOGLEVEL="$log_level"
+	else
+		printerr "Invalid log-level: $log_level"
+		return 1
+	fi
+}
+
+# print to stderr if log-level sufficient
+# examples:
+#   log info "Nuclear launch detected."
+function log() {
+	local msg_level=$1
+	local msg_level_val
+
+	local log_level_val
+	local log_level_col
+
+	shift
+	local args=("$@")
+
+	if [[ "${_BASHTOOLS_LOGLEVELS[$msg_level]+1}" ]]; then
+		read -r log_level_val log_level_col <<<"${_BASHTOOLS_LOGLEVELS[$_BASHTOOLS_CURRENT_LOGLEVEL]}"
+		read -r msg_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$msg_level]}"
+		if [[ "$msg_level_val" -ge "$log_level_val" ]]; then
+			stderr -e "${log_level_col}${msg_level^^}${color_reset} ${args[*]}"
+		fi
+	else
+		printerr "Invalid log-level: $msg_level"
+		return 1
+	fi
+}
+
 # TRACE log-level message to stderr
 function printtrace() {
 	local echo_opts='-e'
@@ -174,7 +225,7 @@ function ask_to_create_directory_if_not_exist() {
 	if [[ ! -d "$_dir" ]]; then
 		printwarn "directory not found: ${theme_filename}$_dir${color_reset}"
 		yes_or_no --default-yes "Create it?" || return
-		mkdir -p "$_dir"
+		mkdir -p "$_dir" || return
 	fi
 	chmod "$_perms" "$_dir"
 }

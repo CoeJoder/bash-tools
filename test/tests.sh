@@ -2,7 +2,7 @@
 
 # tests.sh
 #
-# Runs unit and integration tests.
+# Defines unit and integration tests for `bash-tools`.
 
 # -------------------------- HEADER -------------------------------------------
 
@@ -16,7 +16,7 @@ temp_dir=$(mktemp -d)
 pushd "$temp_dir" >/dev/null || exit
 
 function on_exit() {
-	printinfo -n "Cleaning up..."
+	printinfo -n "Cleaning up ${color_lightgray}[$temp_dir]${color_reset}..."
 	popd >/dev/null || return
 	[[ -d $temp_dir ]] && sudo rm -rf --interactive=never "$temp_dir" >/dev/null
 	print_ok
@@ -48,7 +48,7 @@ function print_test_results() {
 }
 
 function run_test() {
-	printinfo -n "Running: ${color_lightgray}$1${color_reset}..."
+	printinfo -n "Running: ${color_yellow}$1${color_reset}..."
 	"$1"
 	print_test_results
 }
@@ -72,6 +72,89 @@ function _expect_checkfailures() {
 }
 
 # -------------------------- TEST CASES ---------------------------------------
+
+function test_log() {
+	local teststr="test string"
+	local msglevel
+	local loglevel
+	local logoutput
+	local i
+
+	local should_not_print=(
+		# msglevel,loglevel
+		'trace,debug'
+
+		'trace,info'
+		'debug,info'
+
+		'trace,warn'
+		'debug,warn'
+		'info,warn'
+
+		'trace,error'
+		'debug,error'
+		'info,error'
+		'warn,error'
+
+		'trace,fatal'
+		'debug,fatal'
+		'info,fatal'
+		'warn,fatal'
+		'error,fatal'
+	)
+
+	local should_print=(
+		# msglevel,loglevel
+		'trace,trace'
+		'debug,trace'
+		'info,trace'
+		'warn,trace'
+		'error,trace'
+		'fatal,trace'
+		
+		'debug,debug'
+		'info,debug'
+		'warn,debug'
+		'error,debug'
+		'fatal,debug'
+		
+		'info,info'
+		'warn,info'
+		'error,info'
+		'fatal,info'
+		
+		'warn,warn'
+		'error,warn'
+		'fatal,warn'
+		
+		'error,error'
+		'fatal,error'
+		
+		'fatal,fatal'
+	)
+
+	# case 1: should not print
+	for ((i = 0; i < ${#should_not_print[@]}; i++)); do
+		IFS=',' read -r msglevel loglevel <<<"${should_not_print[i]}"
+		set_loglevel "$loglevel"
+		logoutput="$(log "$msglevel" "$teststr" 2>&1)"
+		if [[ -n "$logoutput" ]]; then
+			failures+=("'$msglevel' message should not print at log-level '$loglevel'")
+		fi	
+	done
+
+	# case 2: should print
+	for ((i = 0; i < ${#should_print[@]}; i++)); do
+		IFS=',' read -r msglevel loglevel <<<"${should_print[i]}"
+		set_loglevel "$loglevel"
+		logoutput="$(log "$msglevel" "$teststr" 2>&1)"
+		if [[ -z "$logoutput" ]]; then
+			failures+=("'$msglevel' message should print at log-level '$loglevel'")
+		elif [[ "${logoutput#* }" != "$teststr" ]]; then  # test chars after 1st space
+			failures+=("expected: '$teststr', actual: '$logoutput'")
+		fi
+	done
+}
 
 # tests for `yes_or_no()` in common.sh
 function test_yes_or_no() {
@@ -589,17 +672,3 @@ function test_is_sourced() {
 	compare_expected_actual "interactive shell"
 }
 
-# -------------------------- TEST DRIVER --------------------------------------
-
-assert_sudo
-
-run_test test_yes_or_no
-run_test test_continue_or_exit
-run_test test_check_directory_does_not_exist
-run_test test_check_directory_exists
-run_test test_check_file_does_not_exist
-run_test test_check_file_exists
-run_test test_check_executable_does_not_exist
-run_test test_check_executable_exists
-run_test test_check_is_valid_ipv4_address
-run_test test_is_sourced
