@@ -54,13 +54,16 @@ function print_ok() {
 }
 
 # log levels
-declare -A _BASHTOOLS_LOGLEVELS=(
-	['trace']="10 $color_lightgray"
-	['debug']="20 $color_darkgray"
-	['info']="30 $color_green"
-	['warn']="40 $color_yellow"
-	['error']="50 $color_red"
-	['fatal']="60 ${color_red}${bold}"
+declare -ra _BASHTOOLS_LOGLEVELS_KEYS=(
+	'trace' 'debug' 'info' 'warn' 'error' 'fatal'
+)
+declare -rA _BASHTOOLS_LOGLEVELS=(
+	[${_BASHTOOLS_LOGLEVELS_KEYS[0]}]="10 $color_lightgray"
+	[${_BASHTOOLS_LOGLEVELS_KEYS[1]}]="20 $color_darkgray"
+	[${_BASHTOOLS_LOGLEVELS_KEYS[2]}]="30 $color_green"
+	[${_BASHTOOLS_LOGLEVELS_KEYS[3]}]="40 $color_yellow"
+	[${_BASHTOOLS_LOGLEVELS_KEYS[4]}]="50 $color_red"
+	[${_BASHTOOLS_LOGLEVELS_KEYS[5]}]="60 ${color_red}${bold}"
 )
 
 # current log-level
