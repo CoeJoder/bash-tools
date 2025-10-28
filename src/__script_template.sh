@@ -6,7 +6,8 @@
 
 # -------------------------- HEADER -------------------------------------------
 
-set -eo pipefail
+set -eEo pipefail
+shopt -s inherit_errexit
 
 this_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 source "$this_dir/bash-tools.sh"
