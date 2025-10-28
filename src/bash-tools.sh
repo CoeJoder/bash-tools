@@ -85,18 +85,16 @@ function set_loglevel() {
 function log() {
 	local msg_level=$1
 	local msg_level_val
-
+	local msg_level_col
 	local log_level_val
-	local log_level_col
-
 	shift
 	local args=("$@")
 
 	if [[ "${_BASHTOOLS_LOGLEVELS[$msg_level]+1}" ]]; then
-		read -r log_level_val log_level_col <<<"${_BASHTOOLS_LOGLEVELS[$_BASHTOOLS_CURRENT_LOGLEVEL]}"
-		read -r msg_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$msg_level]}"
+		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$_BASHTOOLS_CURRENT_LOGLEVEL]}"
+		read -r msg_level_val msg_level_col <<<"${_BASHTOOLS_LOGLEVELS[$msg_level]}"
 		if [[ "$msg_level_val" -ge "$log_level_val" ]]; then
-			stderr -e "${log_level_col}${msg_level^^}${color_reset} ${args[*]}"
+			stderr -e "${msg_level_col}${msg_level^^}${color_reset} ${args[*]}"
 		fi
 	else
 		printerr "Invalid log-level: $msg_level"
