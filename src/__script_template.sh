@@ -23,7 +23,7 @@ function show_usage() {
 }
 
 # `getopt` arg parsing
-# see: /usr/share/doc/util-linux/examples/getopt-example.bash
+# see: file:///usr/share/doc/util-linux/examples/getopt-example.bash
 
 _parsed_args=$(getopt \
 	--options='h,q' \

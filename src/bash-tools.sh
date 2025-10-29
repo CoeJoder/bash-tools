@@ -52,6 +52,8 @@ if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
 	color_lightgray=$(tput setaf 245)
 	color_reset=$(tput sgr0)
 	bold=$(tput bold)
+	underline=$(tput smul)
+	nounderline=$(tput rmul)
 
 	# TODO implement `set_theme`
 	theme_filename="${color_green}"
