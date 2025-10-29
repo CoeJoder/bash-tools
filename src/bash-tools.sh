@@ -1,15 +1,43 @@
 #!/bin/bash
-
-# bash-tools.sh
 #
+# bash-tools.sh
 # A general-purpose library of useful bash functions and constants.
+#
+# Requires Bash 5.2+ and GNU getopt (util-linux).
 
 # -------------------------- HEADER -------------------------------------------
 
-# this file is sourced; ignore unused variable warnings
+# This file should be sourced; ignore unused variable warnings.
 # shellcheck disable=SC2034
 
-# -------------------------- CONSTANTS ----------------------------------------
+# Bash version check
+if [[ -z "${BASH_VERSINFO[*]}" ]]; then
+	echo "Error: this script must be run with Bash, not another shell." >&2
+	exit 1
+fi
+if ((BASH_VERSINFO[0] < 5)) || ((BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 2)); then
+	echo "Error: Bash 5.2 or newer is required (found ${BASH_VERSION})." >&2
+	exit 1
+fi
+
+# GNU getopt check
+if ! command -v getopt &>/dev/null; then
+	echo "Error: GNU getopt required" >&2
+	exit 1
+else
+	if getopt -T &>/dev/null; then
+		echo "Error: your getopt is too old. Install util-linux to acquire GNU getopt." >&2
+		exit 1
+	elif [[ $? -ne 4 ]]; then
+		echo "Error: your getopt is too old. Install util-linux to acquire GNU getopt." >&2
+		exit 1
+	fi
+fi
+
+# -------------------------- VARS ---------------------------------------------
+
+# current log-level
+export BASHTOOLS_LOGLEVEL='warn'
 
 # set colors only if tput is available
 if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
@@ -24,11 +52,8 @@ if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
 	color_lightgray=$(tput setaf 245)
 	color_reset=$(tput sgr0)
 	bold=$(tput bold)
-	underline=$(tput smul)
-	nounderline=$(tput rmul)
 
-	# default theme
-	# TODO implement `set_theme()`
+	# TODO implement `set_theme`
 	theme_filename="${color_green}"
 	theme_value="${color_cyan}"
 	theme_url="${color_blue}"
@@ -41,6 +66,11 @@ fi
 # get a human-readable timestamp
 function get_timestamp() {
 	date "+%m-%d-%Y, %r"
+}
+
+# echo to stdout
+function stdout() {
+	echo "$@"
 }
 
 # echo to stderr
@@ -66,23 +96,21 @@ declare -rA _BASHTOOLS_LOGLEVELS=(
 	[${_BASHTOOLS_LOGLEVELS_KEYS[5]}]="60 ${color_red}${bold}"
 )
 
-# current log-level
-_BASHTOOLS_CURRENT_LOGLEVEL='warn'
-
 # set the current log-level
 function set_loglevel() {
 	local log_level="$1"
 	local log_level_val
 	if [[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]; then
-		_BASHTOOLS_CURRENT_LOGLEVEL="$log_level"
+		BASHTOOLS_LOGLEVEL="$log_level"
 	else
 		printerr "Invalid log-level: $log_level"
 		return 1
 	fi
 }
 
-# print to stderr if log-level sufficient
-# examples:
+# Print to stderr if BASHTOOLS_LOGLEVEL is sufficient.
+#
+# Examples:
 #   log info "Nuclear launch detected."
 function log() {
 	local msg_level=$1
@@ -93,7 +121,7 @@ function log() {
 	local args=("$@")
 
 	if [[ "${_BASHTOOLS_LOGLEVELS[$msg_level]+1}" ]]; then
-		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$_BASHTOOLS_CURRENT_LOGLEVEL]}"
+		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$BASHTOOLS_LOGLEVEL]}"
 		read -r msg_level_val msg_level_col <<<"${_BASHTOOLS_LOGLEVELS[$msg_level]}"
 		if [[ "$msg_level_val" -ge "$log_level_val" ]]; then
 			stderr -e "${msg_level_col}${msg_level^^}${color_reset} ${args[*]}"
@@ -407,7 +435,7 @@ function has_no_network_connection() {
 
 # factor
 function _is_sourced() {
-	if (( $# == 0 )); then
+	if (($# == 0)); then
 		printerr "usage: _is_sourced \"\${BASH_SOURCE[@]}\""
 		exit 2
 	fi

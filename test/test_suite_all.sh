@@ -12,6 +12,9 @@ function test_in_subshell() ( # subshell
 	run_test "$1"
 )
 
+# sudo authenticate up front for tests that require it
+sudo true
+
 # test state isolation enforced by one-test-per-subshell
 test_in_subshell test_log
 test_in_subshell test_yes_or_no
