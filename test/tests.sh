@@ -6,17 +6,19 @@
 
 # -------------------------- HEADER -------------------------------------------
 
+trap 'on_err' ERR
+
 this_dir="$(dirname "$(realpath "$0")")"
 bash_tools_sh="$this_dir/../src/bash-tools.sh"
 
-# shellcheck source=./../src/bash-tools.sh
+# shellcheck source=bash-tools.sh
 source "$bash_tools_sh"
 
 temp_dir=$(mktemp -d)
 pushd "$temp_dir" >/dev/null || exit
 
 function on_exit() {
-	printinfo -n "Cleaning up ${color_lightgray}[$temp_dir]${color_reset}..."
+	printinfo -n "Cleaning up $temp_dir..."
 	popd >/dev/null || return
 	[[ -d $temp_dir ]] && sudo rm -rf --interactive=never "$temp_dir" >/dev/null
 	print_ok
