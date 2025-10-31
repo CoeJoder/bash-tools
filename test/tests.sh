@@ -2,7 +2,7 @@
 
 # tests.sh
 #
-# Defines unit and integration tests for `bash-tools`.
+# Internal unit and integration tests for the `bash-tools` project.
 
 # -------------------------- HEADER -------------------------------------------
 
@@ -11,67 +11,12 @@ trap 'on_err' ERR
 this_dir="$(dirname "$(realpath "$0")")"
 bash_tools_sh="$this_dir/../src/bash-tools.sh"
 
+# import script under test
 # shellcheck source=bash-tools.sh
 source "$bash_tools_sh"
 
-temp_dir=$(mktemp -d)
-pushd "$temp_dir" >/dev/null || exit
-
-function on_exit() {
-	printinfo -n "Cleaning up $temp_dir..."
-	popd >/dev/null || return
-	[[ -d $temp_dir ]] && sudo rm -rf --interactive=never "$temp_dir" >/dev/null
-	print_ok
-}
-
-trap 'on_exit' EXIT
-
-# -------------------------- TEST FIXTURES ------------------------------------
-
-failures=()
-
-function reset_test_failures() {
-	failures=()
-}
-
-function print_test_results() {
-	local failcount=${#failures[@]}
-	local i
-	if [[ $failcount -eq 0 ]]; then
-		echo "${color_green}passed${color_reset}"
-		reset_test_failures
-		return 0
-	fi
-	echo "${color_red}failed ($failcount)${color_reset}:"
-	for ((i = 0; i < failcount; i++)); do
-		echo "  ${failures[i]}"
-	done
-	reset_test_failures
-}
-
-function run_test() {
-	printinfo -n "Running: ${color_yellow}$1${color_reset}..."
-	"$1"
-	print_test_results
-}
-
-#
-# these functions adapt the `check_` functions to the test fixtures:
-#
-
-function _dont_expect_checkfailures() {
-	if [[ ${#_check_failures[@]} -gt 0 ]]; then
-		failures+=("${_check_failures[@]}")
-	fi
-}
-
-function _expect_checkfailures() {
-	local expected_count=$1
-	local actual_count=${#_check_failures[@]}
-	if [[ $expected_count -ne $actual_count ]]; then
-		failures+=("line $(caller): check-failures expected: ${expected_count}, actual: ${color_red}$actual_count${color_reset}")
-	fi
-}
+# import `bash-tools` test framework
+source "$this_dir/test_framework.sh"
 
 # -------------------------- TEST CASES ---------------------------------------
 
@@ -555,8 +500,8 @@ function test_is_sourced() {
 	local expected_output_of_direct_execution
 	local shell_bin
 
-	local -r script_A="$(mktemp --tmpdir="$temp_dir")"
-	local -r script_B="$(mktemp --tmpdir="$temp_dir")"
+	local -r script_A="$(mktemp --tmpdir="$BASHTOOLS_TEST_TEMP_DIR")"
+	local -r script_B="$(mktemp --tmpdir="$BASHTOOLS_TEST_TEMP_DIR")"
 	chmod +x "$script_A"
 	chmod +x "$script_B"
 
