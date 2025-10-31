@@ -6,11 +6,9 @@
 
 # -------------------------- HEADER -------------------------------------------
 
-trap 'on_err' ERR
-
 # this_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 
-########## import script under test
+########## import script under test (which imports `bash-tools`)
 # source "$this_dir/../src/my-script.sh"
 
 ########## import `bash-tools` test framework

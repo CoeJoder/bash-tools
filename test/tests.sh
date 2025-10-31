@@ -6,12 +6,10 @@
 
 # -------------------------- HEADER -------------------------------------------
 
-trap 'on_err' ERR
-
 this_dir="$(dirname "$(realpath "$0")")"
 bash_tools_sh="$this_dir/../src/bash-tools.sh"
 
-# import script under test
+# import script under test (which imports `bash-tools`)
 # shellcheck source=bash-tools.sh
 source "$bash_tools_sh"
 
