@@ -17,7 +17,7 @@ You know Python, Node, C#, Go, webdev, and then some.  You're a bonafide profess
 
 Yet here you are, again.  Why?  Because *the shell is the cockpit of the PC, and **Bash** is its instrument panel*.  And make no mistake: **Bash** is *the* shell programming language.  Sorry to break it to you, fishies.
 
-Every developer, gamer, skiddie, and office jerk knows the lure of the shell.  But shell programming is arcane, painful, ugly.  You dove in head-first that one time, but you cracked your skull open on the bottom of the pool and you died a little. 🙃
+Every developer, gamer, skiddie, and office jerk knows the lure of the shell.  But shell programming is arcane, painful, ugly.  You dove in head-first that one time, but you cracked your skull open on the bottom of the pool and you died a little.
 
 **Same here** 😔
 

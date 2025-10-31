@@ -17,7 +17,8 @@ function show_usage() {
 		Usage: $(basename "${BASH_SOURCE[0]}") [options]
 		Options:
 		--the-secret-of-life ${underline}val${nounderline}   Why are we here? Just to suffer? (default: 42)
-		--no-banner, -q            For the esteemed, joyless professional
+		--no-banner                For the esteemed, joyless professional
+		--verbose, -v              Sets log-level to 'trace'
 		--help, -h                 Show this message
 	EOF
 }
@@ -26,14 +27,15 @@ function show_usage() {
 # see: file:///usr/share/doc/util-linux/examples/getopt-example.bash
 
 _parsed_args=$(getopt \
-	--options='h,q' \
-	--longoptions='help,the-secret-of-life:,no-banner' \
+	--options='h,v' \
+	--longoptions='help,no-banner,verbose,the-secret-of-life:' \
 	--name "$(basename "${BASH_SOURCE[0]}")" -- "$@")
 eval set -- "$_parsed_args"
 unset _parsed_args
 
 the_secret_of_life=42
 no_banner=false
+BASHTOOLS_LOGLEVEL='info'
 
 while true; do
 	case "$1" in
@@ -42,7 +44,12 @@ while true; do
 		shift 2
 		continue
 		;;
-	-q | --no-banner)
+	-v | --verbose)
+		BASHTOOLS_LOGLEVEL='trace'
+		shift 1
+		continue
+		;;
+	--no-banner)
 		no_banner=true
 		shift 1
 		continue
@@ -56,7 +63,7 @@ while true; do
 		break
 		;;
 	*)
-		printerr "unknown argument: $1"
+		log error "unknown argument: $1"
 		exit 1
 		;;
 	esac
@@ -101,7 +108,7 @@ fi
 # -------------------------- RECONNAISSANCE -----------------------------------
 
 if [[ ! -d "$this_dir" ]]; then
-	printwarn "Existential crisis detected!"
+	log warn "Existential crisis detected!"
 	continue_or_exit
 fi
 
@@ -109,13 +116,15 @@ fi
 
 trap 'on_err' ERR
 
-printinfo "Hello, ${theme_value}$USER${color_reset}!"
+log info "Hello, ${theme_value}$USER${color_reset}!"
 if yes_or_no --default-yes "Can I tell you something?"; then
-	printwarn "The secret of life is: ${theme_value}$the_secret_of_life${color_reset}"
+	log warn "The secret of life is: ${theme_value}$the_secret_of_life${color_reset}"
+else
+	log trace "User chose to remain uninitiated, base, wallowing."
 fi
 
 # -------------------------- POSTCONDITIONS -----------------------------------
 
-printinfo -n "We are feeling..."
+stderr -n "We are feeling..."
 sleep 1
-print_ok
+stderr "OK"
