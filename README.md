@@ -2,7 +2,7 @@
 
 A general-purpose Bash function library.
 
-See the [script template](./src/__script_template.sh) to get an idea of how it's used.
+See the [script template](./src/__script_template.sh) and [test template](./test/__test_template.sh) to get an idea of how it's used.
 
 ## Importing
 
