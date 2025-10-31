@@ -14,6 +14,8 @@ pushd "$BASHTOOLS_TEST_TEMP_DIR" >/dev/null || exit
 function on_exit() {
 	printinfo -n "Cleaning up $BASHTOOLS_TEST_TEMP_DIR..."
 	popd >/dev/null || return
+	# TODO avoid `sudo rm` by allowing subshells to communicate with test runner
+	# as to which directories require `sudo rm` after-all tests complete.
 	[[ -d $BASHTOOLS_TEST_TEMP_DIR ]] && \
 		sudo rm -rf --interactive=never "$BASHTOOLS_TEST_TEMP_DIR" >/dev/null
 	print_ok
