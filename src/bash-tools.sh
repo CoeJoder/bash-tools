@@ -100,6 +100,10 @@ declare -rA _BASHTOOLS_LOGLEVELS=(
 
 # set the current log-level
 function set_loglevel() {
+	if (($# < 1)); then
+		printerr "Usage: set_loglevel <level>"
+		return 255
+	fi
 	local log_level="${1,,}"  # lowercase
 	local log_level_val
 	if [[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]; then
@@ -115,6 +119,10 @@ function set_loglevel() {
 # Examples:
 #   log info "Nuclear launch detected."
 function log() {
+	if (($# < 1)); then
+		printerr "Usage: log <level> [message]"
+		return 255
+	fi
 	local msg_level="${1,,}"  # lowercase
 	shift
 	local args=("$@")
@@ -148,7 +156,7 @@ function logcat() {
 	log "$@" "$(cat)"
 }
 
-# Helper for trace logging the call stack.
+# Helper for TRACE logging of the call stack.
 #
 # Examples:
 #   functrace "$@"
@@ -156,7 +164,8 @@ function functrace() {
 	log trace "${FUNCNAME[1]} $*"
 }
 
-# TRACE log-level message to stderr
+# Prints TRACE message to stderr.
+# Styled like `log()` but prints regardless of log-level.
 function printtrace() {
 	local echo_opts='-e'
 	if [[ $1 == '-n' ]]; then
@@ -166,7 +175,8 @@ function printtrace() {
 	stderr $echo_opts "${color_lightgray}TRACE ${color_reset}$*"
 }
 
-# DEBUG log-level message to stderr
+# Prints DEBUG message to stderr.
+# Styled like `log()` but prints regardless of log-level.
 function printdebug() {
 	local echo_opts='-e'
 	if [[ $1 == '-n' ]]; then
@@ -176,7 +186,8 @@ function printdebug() {
 	stderr $echo_opts "${color_darkgray}DEBUG ${color_reset}$*"
 }
 
-# INFO log-level message to stderr
+# Prints INFO message to stderr.
+# Styled like `log()` but prints regardless of log-level.
 function printinfo() {
 	local echo_opts='-e'
 	if [[ $1 == '-n' ]]; then
@@ -186,7 +197,8 @@ function printinfo() {
 	stderr $echo_opts "${color_green}INFO ${color_reset}$*"
 }
 
-# WARN log-level message to stderr
+# Prints WARN message to stderr.
+# Styled like `log()` but prints regardless of log-level.
 function printwarn() {
 	local echo_opts='-e'
 	if [[ $1 == '-n' ]]; then
@@ -196,8 +208,10 @@ function printwarn() {
 	stderr $echo_opts "${color_yellow}WARN ${color_reset}$*"
 }
 
-# ERROR log-level message, with optional error code, to stderr
-# examples:
+# Prints ERROR message, with optional error code, to stderr.
+# Styled like `log()` but prints regardless of log-level.
+#
+# Examples:
 #   `printerr "failed to launch"`
 #   `printerr 2 "failed to launch"`
 function printerr() {
@@ -210,13 +224,14 @@ function printerr() {
 		msg="$1"
 		stderr -e "${color_red}ERROR${color_reset} $msg"
 	else
-		stderr "${color_red}ERROR${color_reset} usage: printerr [code] msg"
-		exit 2
+		stderr "${color_red}ERROR${color_reset} Usage: printerr [code] msg"
+		return 255
 	fi
 }
 
-# callback for ERR trap
-# examples:
+# Callback for ERR trap.  Exits the shell at completion.
+#
+# Examples:
 #   `trap 'on_err' ERR
 #   `trap 'on_err "failed to launch"' ERR`
 #   `trap 'on_err 2 "failed to launch"' ERR`
@@ -237,8 +252,8 @@ function on_err() {
 # `read` but allows a default value
 function read_default() {
 	if [[ $# -ne 3 ]]; then
-		stderr "usage: read_default description default_val outvar"
-		return 1
+		stderr "Usage: read_default description default_val outvar"
+		return 255
 	fi
 	local description="$1" default_val="$2" outvar="$3" val
 	echo -e "${description} (default: ${theme_example}$default_val${color_reset}):${theme_value}"
@@ -255,8 +270,8 @@ function read_default() {
 # `read` but stylized like `read_default`
 function read_no_default() {
 	if [[ $# -ne 2 ]]; then
-		stderr "usage: read_no_default description outvar"
-		return 1
+		stderr "Usage: read_no_default description outvar"
+		return 255
 	fi
 	local description="$1" outvar="$2" val
 	IFS= read -rp "${description}: ${theme_value}" val
@@ -267,7 +282,8 @@ function read_no_default() {
 # if directory doesn't exist, ask if it should be created, and chmod it
 function ask_to_create_directory_if_not_exist() {
 	if [[ $# -lt 1 ]]; then
-		stderr "usage: ask_to_create_directory_if_not_exists <directory> [permissions=700]"
+		stderr "Usage: ask_to_create_directory_if_not_exists <directory> [permissions=700]"
+		return 255
 	fi
 	local -r _dir="$1"
 	shift
@@ -282,14 +298,27 @@ function ask_to_create_directory_if_not_exist() {
 	chmod "$_perms" "$_dir"
 }
 
+# Prints the banner text provided by stdin to stderr.
+#
+# Examples:
+#   show_banner "${color_green}${bold}" <<'EOF'
+#   +-+-+-+-+-+ +-+-+-+-+-+-+
+#   |H|e|l|l|o| |W|o|r|l|d|!|
+#   +-+-+-+-+-+ +-+-+-+-+-+-+
+#   EOF
+#
 # shellcheck disable=SC2120  # optional args
 function show_banner() {
+	if (($# < 1)); then
+		printerr "Usage: show_banner [color]"
+		return 255
+	fi
 	local ansii_color_codes="$1"
-	[[ -n $ansii_color_codes ]] && echo -ne "$ansii_color_codes"
+	[[ -n $ansii_color_codes ]] && stderr -ne "$ansii_color_codes"
 	setterm -linewrap off
 	cat
 	setterm -linewrap on
-	[[ -n $ansii_color_codes ]] && echo -ne "$color_reset"
+	[[ -n $ansii_color_codes ]] && stderr -ne "$color_reset"
 }
 
 # get the latest version string/tag name from a github repo
@@ -304,7 +333,7 @@ function _get_latest_github_release() {
 function get_latest_github_release() {
 	if [[ $# -ne 2 ]]; then
 		printerr "expected two arguments: ghproject, outvar"
-		return 2
+		return 255
 	fi
 	local ghproject="$1" outvar="$2" version
 	printinfo -n "Looking up latest '$ghproject' version..."
@@ -321,8 +350,8 @@ function get_latest_github_release() {
 # download a file silently (except on error) using `curl`
 function download_file() {
 	if [[ $# -ne 1 ]]; then
-		printerr "usage: download_file url"
-		return 2
+		printerr "Usage: download_file url"
+		return 255
 	fi
 	local url="$1"
 	if ! curl -fLOSs "$url"; then
@@ -334,8 +363,8 @@ function download_file() {
 # start-and-enable a system service
 function enable_service() {
 	if [[ $# -ne 1 ]]; then
-		printerr "usage: enable_service unit_file"
-		return 2
+		printerr "Usage: enable_service unit_file"
+		return 255
 	fi
 	local unit_file="$1"
 	local service_name
@@ -347,8 +376,8 @@ function enable_service() {
 # stop-and-disable a system service
 function disable_service() {
 	if [[ $# -ne 1 ]]; then
-		printerr "usage: disable_service unit_file"
-		return 2
+		printerr "Usage: disable_service unit_file"
+		return 255
 	fi
 	local unit_file="$1"
 	local service_name
@@ -360,8 +389,8 @@ function disable_service() {
 # restart a system service
 function restart_service() {
 	if [[ $# -ne 1 ]]; then
-		printerr "usage: restart_service unit_file"
-		return 2
+		printerr "Usage: restart_service unit_file"
+		return 255
 	fi
 	local unit_file="$1"
 	local service_name
@@ -375,8 +404,8 @@ function enter_password_and_confirm() {
 	elif [[ $# -eq 2 ]]; then
 		local prompt="$1" outvar="$2"
 	else
-		printerr "usage:\n\tenter_password_and_confirm prompt failmsg check_func outvar\n\tenter_password_and_confirm prompt outvar"
-		return 2
+		printerr "Usage:\n\tenter_password_and_confirm prompt failmsg check_func outvar\n\tenter_password_and_confirm prompt outvar"
+		return 255
 	fi
 	# loop until valid password
 	while true; do
@@ -460,8 +489,8 @@ function has_no_network_connection() {
 # factor
 function _is_sourced() {
 	if (($# == 0)); then
-		printerr "usage: _is_sourced \"\${BASH_SOURCE[@]}\""
-		exit 2
+		printerr "Usage: _is_sourced \"\${BASH_SOURCE[@]}\""
+		return 255
 	fi
 	local -r shell_bin="$(readlink -f /proc/$$/exe)"
 	local -r call_stack=("$@")
@@ -484,8 +513,8 @@ function is_sourced() {
 function yes_or_no() {
 	local confirm
 	if [[ $# -ne 2 || ($1 != '--default-yes' && $1 != '--default-no') ]]; then
-		printerr 'usage: yes_or_no {--default-yes|--default-no} prompt'
-		exit 2
+		printerr 'Usage: yes_or_no {--default-yes|--default-no} prompt'
+		return 255
 	fi
 	if [[ $1 == '--default-yes' ]]; then
 		IFS= read -rp "$2 (Y/n): " confirm
@@ -575,8 +604,8 @@ function assert_sudo() {
 # assert that script process is running on given host
 function assert_on_host() {
 	if [[ $# -ne 1 ]]; then
-		printerr "usage: assert_on_host <host>"
-		exit 2
+		printerr "Usage: assert_on_host <host>"
+		exit 255
 	fi
 	local -r _hostname="$1"
 	if [[ $(hostname) != "$1" ]]; then
@@ -588,7 +617,7 @@ function assert_on_host() {
 # assert that script process is not running on given host
 function assert_not_on_host() {
 	if [[ $# -ne 1 ]]; then
-		printerr "usage: assert_not_on_host <host>"
+		printerr "Usage: assert_not_on_host <host>"
 		exit 2
 	fi
 	local -r _hostname="$1"
@@ -643,8 +672,8 @@ function has_failed_checks() {
 # print failed checks with given log-level, return error code if failures
 function print_failed_checks() {
 	if [[ $# -ne 1 || ($1 != "--warn" && $1 != "--error") ]]; then
-		printerr "usage: print_failed_checks {--warn|--error}"
-		exit 2
+		printerr "Usage: print_failed_checks {--warn|--error}"
+		return 255
 	fi
 	local failcount=${#_check_failures[@]}
 	local i
@@ -874,8 +903,8 @@ function check_is_boolean() {
 # predicate (may return non-zero)
 function _check_is_defined() {
 	if [[ $# -ne 1 ]]; then
-		printerr "no argument provided"
-		exit 2
+		printerr "No argument provided"
+		return 255
 	fi
 	if [[ -z ${!1} ]]; then
 		_check_failures+=("variable is undefined: $1")
@@ -890,8 +919,8 @@ function check_is_defined() {
 
 function check_argument_not_missing() {
 	if [[ $# -ne 1 ]]; then
-		printerr "no argument name provided"
-		exit 2
+		printerr "No argument name provided"
+		return 255
 	fi
 	if [[ -z ${!1} ]]; then
 		_check_failures+=("missing argument: $1")
