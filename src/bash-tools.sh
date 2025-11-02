@@ -134,6 +134,14 @@ function log() {
 	fi
 }
 
+# Helper for trace logging the call stack.
+#
+# Examples:
+#   functrace "$@"
+function functrace() {
+	log trace "${FUNCNAME[1]} $*"
+}
+
 # TRACE log-level message to stderr
 function printtrace() {
 	local echo_opts='-e'
