@@ -81,6 +81,7 @@ function stderr() {
 }
 
 # common logging suffix for INFO messages
+# TODO remove
 function print_ok() {
 	stderr "${color_green}OK${color_reset}"
 }
@@ -101,7 +102,7 @@ declare -rA _BASHTOOLS_LOGLEVELS=(
 # set the current log-level
 function set_loglevel() {
 	if (($# < 1)); then
-		printerr "Usage: set_loglevel <level>"
+		log error "Usage: set_loglevel <level>"
 		return 255
 	fi
 	local log_level="${1,,}"  # lowercase
@@ -109,7 +110,7 @@ function set_loglevel() {
 	if [[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]; then
 		_BASHTOOLS_LOGLEVEL="$log_level"
 	else
-		printerr "Invalid log-level: $log_level"
+		log error "Invalid log-level: $log_level"
 		return 1
 	fi
 }
@@ -120,7 +121,7 @@ function set_loglevel() {
 #   log info "Nuclear launch detected."
 function log() {
 	if (($# < 1)); then
-		printerr "Usage: log <level> [message]"
+		log error "Usage: log <level> [message]"
 		return 255
 	fi
 	local msg_level="${1,,}"  # lowercase
@@ -138,7 +139,7 @@ function log() {
 			stderr -e "${msg_level_col}${msg_level^^}${color_reset} ${args[*]}"
 		fi
 	else
-		printerr "Invalid log-level: $msg_level"
+		log error "Invalid log-level: $msg_level"
 		return 1
 	fi
 }
@@ -224,7 +225,7 @@ function printerr() {
 		msg="$1"
 		stderr -e "${color_red}ERROR${color_reset} $msg"
 	else
-		stderr "${color_red}ERROR${color_reset} Usage: printerr [code] msg"
+		log error "${color_red}ERROR${color_reset} Usage: printerr [code] msg"
 		return 255
 	fi
 }
@@ -245,7 +246,7 @@ function on_err() {
 	elif [[ $# -eq 1 ]]; then
 		exit_status=$1
 	fi
-	printerr "$exit_status" "$msg"
+	log error "$exit_status" "$msg"
 	exit "$exit_status"
 }
 
@@ -291,7 +292,7 @@ function ask_to_create_directory_if_not_exist() {
 
 	# ensure config directory exists and is read/writable
 	if [[ ! -d "$_dir" ]]; then
-		printwarn "directory not found: ${theme_filename}$_dir${color_reset}"
+		log warn "directory not found: ${theme_filename}$_dir${color_reset}"
 		yes_or_no --default-yes "Create it?" || return
 		mkdir -p "$_dir" || return
 	fi
@@ -310,7 +311,7 @@ function ask_to_create_directory_if_not_exist() {
 # shellcheck disable=SC2120  # optional args
 function show_banner() {
 	if (($# < 1)); then
-		printerr "Usage: show_banner [color]"
+		log error "Usage: show_banner [color]"
 		return 255
 	fi
 	local ansii_color_codes="$1"
@@ -332,15 +333,15 @@ function _get_latest_github_release() {
 # factor; get the latest "vX.Y(.Z)" version of a GH project
 function get_latest_github_release() {
 	if [[ $# -ne 2 ]]; then
-		printerr "expected two arguments: ghproject, outvar"
+		log error "Expected two arguments: ghproject, outvar"
 		return 255
 	fi
 	local ghproject="$1" outvar="$2" version
-	printinfo -n "Looking up latest '$ghproject' version..."
+	log info -n "Looking up latest '$ghproject' version..."
 	version="$(_get_latest_github_release "$ghproject")"
 	if [[ ! "$version" =~ v[[:digit:]]+\.[[:digit:]]+(\.[[:digit:]]+)? ]]; then
 		stderr "${color_red}failed${color_reset}."
-		printerr "malformed version string: \"$version\""
+		log error "malformed version string: \"$version\""
 		return 1
 	fi
 	stderr "${theme_value}${version}${color_reset}"
@@ -350,12 +351,12 @@ function get_latest_github_release() {
 # download a file silently (except on error) using `curl`
 function download_file() {
 	if [[ $# -ne 1 ]]; then
-		printerr "Usage: download_file url"
+		log error "Usage: download_file url"
 		return 255
 	fi
 	local url="$1"
 	if ! curl -fLOSs "$url"; then
-		printerr "download failed: $url"
+		log error "download failed: $url"
 		return 1
 	fi
 }
@@ -363,7 +364,7 @@ function download_file() {
 # start-and-enable a system service
 function enable_service() {
 	if [[ $# -ne 1 ]]; then
-		printerr "Usage: enable_service unit_file"
+		log error "Usage: enable_service unit_file"
 		return 255
 	fi
 	local unit_file="$1"
@@ -376,7 +377,7 @@ function enable_service() {
 # stop-and-disable a system service
 function disable_service() {
 	if [[ $# -ne 1 ]]; then
-		printerr "Usage: disable_service unit_file"
+		log error "Usage: disable_service unit_file"
 		return 255
 	fi
 	local unit_file="$1"
@@ -389,7 +390,7 @@ function disable_service() {
 # restart a system service
 function restart_service() {
 	if [[ $# -ne 1 ]]; then
-		printerr "Usage: restart_service unit_file"
+		log error "Usage: restart_service unit_file"
 		return 255
 	fi
 	local unit_file="$1"
@@ -404,20 +405,20 @@ function enter_password_and_confirm() {
 	elif [[ $# -eq 2 ]]; then
 		local prompt="$1" outvar="$2"
 	else
-		printerr "Usage:\n\tenter_password_and_confirm prompt failmsg check_func outvar\n\tenter_password_and_confirm prompt outvar"
+		log error "Usage:\n\tenter_password_and_confirm prompt failmsg check_func outvar\n\tenter_password_and_confirm prompt outvar"
 		return 255
 	fi
 	# loop until valid password
 	while true; do
 		IFS= read -rsp "$prompt: " password1
-		printf '\n'
+		stderr
 		if [[ -z $check_func ]]; then
 			break # no validator provided
 		else
 			reset_checks
 			"$check_func" "password1"
 			if has_failed_checks; then
-				printwarn "$failmsg"
+				log warn "$failmsg"
 				reset_checks
 			else
 				break # success
@@ -427,9 +428,9 @@ function enter_password_and_confirm() {
 	# loop until confirmed
 	while true; do
 		IFS= read -rsp "Re-enter to confirm: " password2
-		printf '\n'
+		stderr
 		if [[ $password1 != "$password2" ]]; then
-			printwarn "confirmation failed, try again"
+			log warn "confirmation failed, try again"
 		else
 			break # success
 		fi
@@ -489,7 +490,7 @@ function has_no_network_connection() {
 # factor
 function _is_sourced() {
 	if (($# == 0)); then
-		printerr "Usage: _is_sourced \"\${BASH_SOURCE[@]}\""
+		log error "Usage: _is_sourced \"\${BASH_SOURCE[@]}\""
 		return 255
 	fi
 	local -r shell_bin="$(readlink -f /proc/$$/exe)"
@@ -513,7 +514,7 @@ function is_sourced() {
 function yes_or_no() {
 	local confirm
 	if [[ $# -ne 2 || ($1 != '--default-yes' && $1 != '--default-no') ]]; then
-		printerr 'Usage: yes_or_no {--default-yes|--default-no} prompt'
+		log error 'Usage: yes_or_no {--default-yes|--default-no} prompt'
 		return 255
 	fi
 	if [[ $1 == '--default-yes' ]]; then
@@ -546,7 +547,7 @@ function continue_or_exit() {
 function press_any_key_to_continue() {
 	local -r prompt="${1:-Press any key to continue...}"
 	IFS= read -rsn 1 -p $"$prompt"
-	printf "\n\n"
+	stderr "\n"
 }
 
 # pause script execution until user presses a key, then exit shell
@@ -562,7 +563,7 @@ function choose_from_menu() {
 	local -i cur=0 count=${#options[@]} index=0
 	local esc
 	esc=$(echo -en "\e") # cache ESC as test doesn't allow esc codes
-	printf "%s\n" "$prompt"
+	stderr "$prompt"
 	while true; do
 		# list all options (option list is zero-based)
 		index=0
@@ -596,7 +597,7 @@ function choose_from_menu() {
 # can prevent auth failures from polluting sudo'd conditional expressions
 function assert_sudo() {
 	if ! sudo -p '[sudo] password for %u@%H: ' true; then
-		printerr "failed to authenticate"
+		log error "failed to authenticate"
 		exit 1
 	fi
 }
@@ -604,12 +605,12 @@ function assert_sudo() {
 # assert that script process is running on given host
 function assert_on_host() {
 	if [[ $# -ne 1 ]]; then
-		printerr "Usage: assert_on_host <host>"
+		log error "Usage: assert_on_host <host>"
 		exit 255
 	fi
 	local -r _hostname="$1"
 	if [[ $(hostname) != "$1" ]]; then
-		printerr "script must be run on host '$_hostname'"
+		log error "script must be run on host '$_hostname'"
 		exit 1
 	fi
 }
@@ -617,12 +618,12 @@ function assert_on_host() {
 # assert that script process is not running on given host
 function assert_not_on_host() {
 	if [[ $# -ne 1 ]]; then
-		printerr "Usage: assert_not_on_host <host>"
+		log error "Usage: assert_not_on_host <host>"
 		exit 2
 	fi
 	local -r _hostname="$1"
 	if [[ $(hostname) == "$_hostname" ]]; then
-		printerr "script must not be run on host '$_hostname'"
+		log error "script must not be run on host '$_hostname'"
 		exit 1
 	fi
 }
@@ -630,7 +631,7 @@ function assert_not_on_host() {
 # assert that script process does not have network access
 function assert_offline() {
 	if ! has_no_network_connection; then
-		printerr "script must be run on the air-gapped PC"
+		log error "script must be run on the air-gapped PC"
 		exit 1
 	fi
 }
@@ -639,7 +640,7 @@ function assert_offline() {
 function assert_sourced() {
 	# drop the current call stack frame from the analysis
 	if ! _is_sourced "${BASH_SOURCE[@]:1}"; then
-		printerr "script must be sourced, not executed directly: ${theme_filename}${BASH_SOURCE[1]}${color_reset}"
+		log error "script must be sourced, not executed directly: ${theme_filename}${BASH_SOURCE[1]}${color_reset}"
 		exit 1
 	fi
 }
@@ -648,7 +649,7 @@ function assert_sourced() {
 function assert_not_sourced() {
 	# drop the current call stack frame from the analysis
 	if _is_sourced "${BASH_SOURCE[@]:1}"; then
-		printerr "script must be executed directly, not sourced: ${theme_filename}${BASH_SOURCE[1]}${color_reset}"
+		log error "script must be executed directly, not sourced: ${theme_filename}${BASH_SOURCE[1]}${color_reset}"
 		# pause before closing interactive shell
 		if [[ "$-" == *i* ]]; then
 			press_any_key_to_exit_shell
@@ -672,7 +673,7 @@ function has_failed_checks() {
 # print failed checks with given log-level, return error code if failures
 function print_failed_checks() {
 	if [[ $# -ne 1 || ($1 != "--warn" && $1 != "--error") ]]; then
-		printerr "Usage: print_failed_checks {--warn|--error}"
+		log error "Usage: print_failed_checks {--warn|--error}"
 		return 255
 	fi
 	local failcount=${#_check_failures[@]}
@@ -680,9 +681,9 @@ function print_failed_checks() {
 	if [[ $failcount -gt 0 ]]; then
 		for ((i = 0; i < failcount; i++)); do
 			if [[ $1 == "--warn" ]]; then
-				printwarn "${_check_failures[i]}"
+				log warn "${_check_failures[i]}"
 			else
-				printerr "${_check_failures[i]}"
+				log error "${_check_failures[i]}"
 			fi
 		done
 		reset_checks
@@ -903,7 +904,7 @@ function check_is_boolean() {
 # predicate (may return non-zero)
 function _check_is_defined() {
 	if [[ $# -ne 1 ]]; then
-		printerr "No argument provided"
+		log error "No argument provided"
 		return 255
 	fi
 	if [[ -z ${!1} ]]; then
@@ -919,7 +920,7 @@ function check_is_defined() {
 
 function check_argument_not_missing() {
 	if [[ $# -ne 1 ]]; then
-		printerr "No argument name provided"
+		log error "No argument name provided"
 		return 255
 	fi
 	if [[ -z ${!1} ]]; then
