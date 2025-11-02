@@ -50,14 +50,14 @@ function test_log() {
 
 	local should_print=(
 		# msglevel,loglevel
-		'trace,trace'
+		'trace,TRACE'
 		'debug,trace'
 		'info,trace'
 		'warn,trace'
 		'error,trace'
 		'fatal,trace'
 		
-		'debug,debug'
+		'DEBUG,debug'
 		'info,debug'
 		'warn,debug'
 		'error,debug'
@@ -68,7 +68,7 @@ function test_log() {
 		'error,info'
 		'fatal,info'
 		
-		'warn,warn'
+		'warn,WARN'
 		'error,warn'
 		'fatal,warn'
 		

@@ -37,7 +37,7 @@ fi
 # -------------------------- VARS ---------------------------------------------
 
 # current log-level
-export BASHTOOLS_LOGLEVEL='warn'
+export _BASHTOOLS_LOGLEVEL='warn'
 
 # set colors only if tput is available
 if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
@@ -100,30 +100,31 @@ declare -rA _BASHTOOLS_LOGLEVELS=(
 
 # set the current log-level
 function set_loglevel() {
-	local log_level="$1"
+	local log_level="${1,,}"  # lowercase
 	local log_level_val
 	if [[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]; then
-		BASHTOOLS_LOGLEVEL="$log_level"
+		_BASHTOOLS_LOGLEVEL="$log_level"
 	else
 		printerr "Invalid log-level: $log_level"
 		return 1
 	fi
 }
 
-# Print to stderr if BASHTOOLS_LOGLEVEL is sufficient.
+# Print to stderr if log-level is sufficient.
 #
 # Examples:
 #   log info "Nuclear launch detected."
 function log() {
-	local msg_level=$1
+	local msg_level="${1,,}"  # lowercase
+	shift
+	local args=("$@")
+	shift $#
 	local msg_level_val
 	local msg_level_col
 	local log_level_val
-	shift
-	local args=("$@")
 
 	if [[ "${_BASHTOOLS_LOGLEVELS[$msg_level]+1}" ]]; then
-		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$BASHTOOLS_LOGLEVEL]}"
+		read -r log_level_val _ <<<"${_BASHTOOLS_LOGLEVELS[$_BASHTOOLS_LOGLEVEL]}"
 		read -r msg_level_val msg_level_col <<<"${_BASHTOOLS_LOGLEVELS[$msg_level]}"
 		if [[ "$msg_level_val" -ge "$log_level_val" ]]; then
 			stderr -e "${msg_level_col}${msg_level^^}${color_reset} ${args[*]}"
@@ -132,6 +133,19 @@ function log() {
 		printerr "Invalid log-level: $msg_level"
 		return 1
 	fi
+}
+
+# Same as `log()` but message is passed via stdin.
+#
+# Examples:
+#   logcat error <<-EOF
+#   	Usage: $(basename "${BASH_SOURCE[0]}") [options]
+#   	Options:
+#   	  --arg1 value   First arg
+#   	  --arg2 value   Second arg
+#   EOF
+function logcat() {
+	log "$@" "$(cat)"
 }
 
 # Helper for trace logging the call stack.

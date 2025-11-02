@@ -35,7 +35,6 @@ unset _parsed_args
 
 the_secret_of_life=42
 no_banner=false
-BASHTOOLS_LOGLEVEL='info'
 
 while true; do
 	case "$1" in
@@ -45,7 +44,7 @@ while true; do
 		continue
 		;;
 	-v | --verbose)
-		BASHTOOLS_LOGLEVEL='trace'
+		set_loglevel trace
 		shift 1
 		continue
 		;;
