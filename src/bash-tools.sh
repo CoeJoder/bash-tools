@@ -37,7 +37,7 @@ fi
 # -------------------------- VARS ---------------------------------------------
 
 # current log-level
-export _BASHTOOLS_LOGLEVEL='warn'
+export _BASHTOOLS_LOGLEVEL='info'
 
 # set colors only if tput is available
 if [[ $(command -v tput && tput setaf 1 2>/dev/null) ]]; then
