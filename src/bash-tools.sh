@@ -337,7 +337,7 @@ function get_latest_github_release() {
 		return 255
 	fi
 	local ghproject="$1" outvar="$2" version
-	log info -n "Looking up latest '$ghproject' version..."
+	log info "Looking up latest '$ghproject' version..."
 	version="$(_get_latest_github_release "$ghproject")"
 	if [[ ! "$version" =~ v[[:digit:]]+\.[[:digit:]]+(\.[[:digit:]]+)? ]]; then
 		stderr "${color_red}failed${color_reset}."
