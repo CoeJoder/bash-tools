@@ -290,7 +290,6 @@ function ask_to_create_directory_if_not_exist() {
 	shift
 	local -r _perms="${1:-700}"
 
-	# ensure config directory exists and is read/writable
 	if [[ ! -d "$_dir" ]]; then
 		log warn "directory not found: ${theme_filename}$_dir${color_reset}"
 		yes_or_no --default-yes "Create it?" || return
