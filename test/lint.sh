@@ -7,8 +7,8 @@
 #
 # Example:
 # ../bash-tools/test/lint.sh \
-#   --path ./src
-#   --path ./test
+#   --path ./src \
+#   --path ./test \
 #   --path ./tools
 
 set -eo pipefail
