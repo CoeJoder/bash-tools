@@ -493,12 +493,13 @@ function _is_sourced() {
 		log error "Usage: _is_sourced \"\${BASH_SOURCE[@]}\""
 		return 255
 	fi
-	local -r shell_bin="$(readlink -f /proc/$$/exe)"
 	local -r call_stack=("$@")
+	local -r shell_bin="$(readlink -f /proc/$$/exe)"
+	local -r interactive_shell_bin="$(readlink -f "$(command -v "$0")")"
 
 	# the first predicate is true when caller is sourced from shell script
 	# the second predicate is true when caller is sourced from interactive shell
-	[[ "${call_stack[0]}" != "${call_stack[-1]}" || "$0" == "$shell_bin" ]]
+	[[ "${call_stack[0]}" != "${call_stack[-1]}" || "$interactive_shell_bin" == "$shell_bin" ]]
 }
 
 # test expression for whether caller's script was invoked with `source`
