@@ -99,6 +99,16 @@ declare -rA _BASHTOOLS_LOGLEVELS=(
 	[${_BASHTOOLS_LOGLEVELS_KEYS[5]}]="60 ${color_red}${bold}"
 )
 
+# test if arg is a valid log-level
+function is_valid_loglevel() {
+	if (($# < 1)); then
+		log error "Usage: is_valid_loglevel <level>"
+		return 255
+	fi
+	local log_level="${1,,}"  # lowercase
+	[[ "${_BASHTOOLS_LOGLEVELS[$log_level]+1}" ]]
+}
+
 # set the current log-level
 function set_loglevel() {
 	if (($# < 1)); then
@@ -771,6 +781,14 @@ function check_file_exists() {
 	if _check_is_defined "$1"; then
 		if $_sudo test ! -f "${!1}"; then
 			_check_failures+=("file does not exist: ${!1}")
+		fi
+	fi
+}
+
+function check_is_valid_loglevel() {
+	if _check_is_defined "$1"; then
+		if ! is_valid_loglevel "${!1}"; then
+			_check_failures+=("invalid log-level: ${!1}")
 		fi
 	fi
 }
