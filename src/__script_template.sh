@@ -12,16 +12,15 @@ shopt -s inherit_errexit
 this_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 source "$this_dir/bash-tools.sh"
 
-function show_usage() {
-	cat >&2 <<-EOF
-		Usage: $(basename "${BASH_SOURCE[0]}") [options]
-		Options:
-		--the-secret-of-life ${underline}val${nounderline}   Why are we here? Just to suffer? (default: 42)
-		--no-banner                For the esteemed, joyless professional
-		--verbose, -v              Sets log-level to 'trace'
-		--help, -h                 Show this message
-	EOF
-}
+usage="Usage: $(basename "${BASH_SOURCE[0]}") [options]
+
+Script template and \`bash-tools\` demo.
+
+Options:
+  --the-secret-of-life ${underline}val${nounderline}   Why are we here? Just to suffer? (default: 42)
+  --no-banner                For the esteemed, joyless professional
+  --verbose, -v              Sets log-level to 'trace'
+  --help, -h                 Show this message"
 
 # `getopt` arg parsing
 # see: file:///usr/share/doc/util-linux/examples/getopt-example.bash
@@ -54,7 +53,7 @@ while true; do
 		continue
 		;;
 	-h | --help)
-		show_usage
+		stdout "$usage"
 		exit 0
 		;;
 	--)
