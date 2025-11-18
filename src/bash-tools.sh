@@ -3,7 +3,7 @@
 # bash-tools.sh
 # A general-purpose library of useful bash functions and constants.
 #
-# Requires Bash 5.2+ and GNU getopt (util-linux).
+# Requires Bash 5.0+ and GNU getopt (util-linux).
 
 # -------------------------- HEADER -------------------------------------------
 
@@ -15,8 +15,8 @@ if [[ -z "${BASH_VERSINFO[*]}" ]]; then
 	echo "Error: this script must be run with Bash, not another shell." >&2
 	exit 1
 fi
-if ((BASH_VERSINFO[0] < 5)) || ((BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 2)); then
-	echo "Error: Bash 5.2 or newer is required (found ${BASH_VERSION})." >&2
+if ((BASH_VERSINFO[0] < 5)); then
+	echo "Error: Bash 5.0 or newer is required (found ${BASH_VERSION})." >&2
 	exit 1
 fi
 
@@ -557,7 +557,7 @@ function continue_or_exit() {
 function press_any_key_to_continue() {
 	local -r prompt="${1:-Press any key to continue...}"
 	IFS= read -rsn 1 -p $"$prompt"
-	stderr "\n"
+	stderr
 }
 
 # pause script execution until user presses a key, then exit shell
