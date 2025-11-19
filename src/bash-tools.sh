@@ -504,7 +504,8 @@ function _is_sourced() {
 	fi
 	local -r call_stack=("$@")
 	local -r shell_bin="$(readlink -f /proc/$$/exe)"
-	local -r interactive_shell_bin="$(readlink -f "$(command -v "$0")")"
+	# $0 is prefixed with hyphen for login shells; remove it for the comparison
+	local -r interactive_shell_bin="$(readlink -f "$(command -v "${0##-}")")"
 
 	# the first predicate is true when caller is sourced from shell script
 	# the second predicate is true when caller is sourced from interactive shell
