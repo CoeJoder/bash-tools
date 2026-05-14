@@ -1,6 +1,7 @@
 # bash-tools
 
-A general-purpose Bash function library.
+A ~~general-purpose~~ Mint-flavored Bash function library.<br>
+*Mostly assumes a Linux Mint userspace and systemd.  May generalize later...*
 
 See the [script template](./src/__script_template.sh) and [test template](./test/__test_template.sh) to get an idea of how it's used.
 

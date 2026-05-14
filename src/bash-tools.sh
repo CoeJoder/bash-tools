@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # bash-tools.sh
-# A general-purpose library of useful bash functions and constants.
+# A Mint-flavored library of useful bash functions and constants.
 #
 # Requires Bash 5.0+ and GNU getopt (util-linux).
 
